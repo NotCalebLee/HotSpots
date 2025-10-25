@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HotSpots</title>
+  <link rel="stylesheet" href="styles/style.css" />
+</head>
+<body>
+  <header>
+    <h1>HotSpots</h1>
+    <p>Visualize Wi-Fi usage across regions</p>
+  </header>
+
+  <main>
+    <section id="map-container">
+      <canvas id="heatmap"></canvas>
+    </section>
+
+    <section id="controls">
+      <input type="file" id="data-upload" accept=".json,.csv" />
+      <button id="update-map">Update Map</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 HotSpots</p>
+  </footer>
+
+<script type="module" src="test.js" defer></script>
+</body>
+</html>
