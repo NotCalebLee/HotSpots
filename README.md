@@ -88,7 +88,7 @@ For questions or feedback, visit the contact section on our website.
 
 ---
 
-## 📈 Future Enhancements
+## Future Enhancements
 
 - [ ] Real-time data updates
 - [ ] More campus locations
