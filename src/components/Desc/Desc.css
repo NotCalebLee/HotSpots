@@ -17,7 +17,7 @@
     transform: translate(-50%, -50%);
     width: 800px;
     height: 800px;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(71, 85, 105, 0.08) 0%, transparent 70%);
     animation: pulse 4s ease-in-out infinite;
     z-index: 0;
 }
@@ -36,18 +36,18 @@
 .hero img{
     margin-top: 80px;
     border-radius: 24px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
-                0 0 80px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 20px 60px var(--shadow-medium),
+                0 0 40px var(--shadow-light);
     transition: all 0.4s ease;
     position: relative;
     z-index: 1;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    border: 1px solid var(--border-color);
 }
 
 .hero img:hover {
     transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6),
-                0 0 100px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 30px 80px var(--shadow-medium),
+                0 0 60px var(--shadow-light);
 }
 
 .hero h1{
@@ -61,23 +61,9 @@
 }
 
 .hero h1 span{
-    background: linear-gradient(135deg, #06b6d4 0%, #6366f1 50%, #8b5cf6 100%);
-    background-size: 200% 200%;
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: gradientShift 3s ease infinite;
+    color: var(--text-primary);
     position: relative;
     display: inline-block;
-}
-
-@keyframes gradientShift {
-    0%, 100% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
 }
 
 .hero h1 span::after {
@@ -87,7 +73,7 @@
     left: 0;
     width: 100%;
     height: 4px;
-    background: linear-gradient(90deg, transparent, #6366f1, transparent);
+    background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
     border-radius: 2px;
 }
 
@@ -96,10 +82,11 @@
     text-align: center;
     font-size: 22px;
     line-height: 1.8;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     position: relative;
     z-index: 1;
     font-weight: 400;
+    opacity: 0.9;
 }
 
 .hero-action{
@@ -116,13 +103,14 @@
 .hero-connect{
     padding: 20px 45px;
     border-radius: 50px;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px var(--shadow-medium);
+    border: 1px solid transparent;
     position: relative;
     overflow: hidden;
+    color: white;
 }
 
 .hero-connect::before {
@@ -142,19 +130,20 @@
 
 .hero-connect:hover{
     transform: translateY(-3px);
-    box-shadow: 0 15px 40px rgba(99, 102, 241, 0.6);
+    box-shadow: 0 15px 40px var(--shadow-medium);
 }
 
 .hero-resume{
     padding: 20px 45px;
     border-radius: 50px;
-    border: 2px solid rgba(99, 102, 241, 0.5);
+    border: 2px solid var(--primary-color);
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(71, 85, 105, 0.05);
     backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
+    color: var(--text-primary);
 }
 
 .hero-resume::before {
@@ -163,7 +152,7 @@
     inset: 0;
     border-radius: 50px;
     padding: 2px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -177,8 +166,8 @@
 
 .hero-resume:hover{
     transform: translateY(-3px);
-    background: rgba(99, 102, 241, 0.1);
-    box-shadow: 0 15px 40px rgba(99, 102, 241, 0.3);
+    background: rgba(71, 85, 105, 0.1);
+    box-shadow: 0 15px 40px var(--shadow-light);
 }
 
 @media(max-width: 768px){
