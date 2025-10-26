@@ -21,7 +21,7 @@
 .orb-1 {
     width: 500px;
     height: 500px;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.4), transparent);
+    background: radial-gradient(circle, rgba(156, 163, 175, 0.15), transparent);
     top: 10%;
     left: 10%;
     animation: float1 20s infinite;
@@ -30,7 +30,7 @@
 .orb-2 {
     width: 400px;
     height: 400px;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.4), transparent);
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.12), transparent);
     top: 60%;
     right: 10%;
     animation: float2 25s infinite;
@@ -39,7 +39,7 @@
 .orb-3 {
     width: 350px;
     height: 350px;
-    background: radial-gradient(circle, rgba(6, 182, 212, 0.4), transparent);
+    background: radial-gradient(circle, rgba(107, 114, 128, 0.1), transparent);
     bottom: 10%;
     left: 50%;
     animation: float3 30s infinite;

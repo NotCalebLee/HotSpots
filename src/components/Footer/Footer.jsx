@@ -37,7 +37,7 @@ const Footer = () => {
       <div className="footer-bottom">
         <div className="footer-divider"></div>
         <p className="footer-copyright">
-          © 2024 HotSpots. All rights reserved.
+          © 2025 HotSpots. All rights reserved.
         </p>
       </div>
     </footer>

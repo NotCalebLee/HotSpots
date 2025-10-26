@@ -36,11 +36,6 @@ return (
             <p onClick={() => setMenu("home")}>Home</p>
           </AnchorLink>
         </li>
-        <li>
-          <AnchorLink className="anchor-link" offset={50} href="#about">
-            <p onClick={() => setMenu("about")}>About Us</p>
-          </AnchorLink>
-        </li>
 
         <li>
           <AnchorLink className="anchor-link" offset={50} href="#dartmouth">
