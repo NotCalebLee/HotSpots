@@ -21,7 +21,6 @@ const menuRef = useRef(null);
 return (
   <div className="navbar">
     <div className="nav-logo">
-      <span className="logo-icon">🔥</span>
       <span className="logo-text">HotSpots</span>
     </div>
     <img src={menu_open} onClick={openMenu} alt="" className="nav-mob-open" />
@@ -40,6 +39,18 @@ return (
         <li>
           <AnchorLink className="anchor-link" offset={50} href="#about">
             <p onClick={() => setMenu("about")}>About Us</p>
+          </AnchorLink>
+        </li>
+
+        <li>
+          <AnchorLink className="anchor-link" offset={50} href="#dartmouth">
+            <p onClick={() => setMenu("dartmouth")}>Dartmouth Data</p>
+          </AnchorLink>
+        </li>
+
+        <li>
+          <AnchorLink className="anchor-link" offset={50} href="#hongkong">
+            <p onClick={() => setMenu("hongkong")}>Hong Kong Data</p>
           </AnchorLink>
         </li>
 

@@ -7,7 +7,6 @@ const Footer = () => {
       <div className="footer-content">
         <div className="footer-section">
           <div className="footer-logo">
-            <span className="footer-logo-icon">🔥</span>
             <span className="footer-logo-text">HotSpots</span>
           </div>
           <p className="footer-description">
@@ -38,7 +37,7 @@ const Footer = () => {
       <div className="footer-bottom">
         <div className="footer-divider"></div>
         <p className="footer-copyright">
-          © 2024 HotSpots. All rights reserved. | Built with ❤️
+          © 2024 HotSpots. All rights reserved.
         </p>
       </div>
     </footer>

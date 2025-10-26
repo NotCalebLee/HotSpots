@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dartmouth Campus Interactive Heatmap</title>
+        <style>
+                * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                }
+
+                body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        padding: 20px;
+                }
+
+                .container {
+                        max-width: 1800px;
+                        margin: 0 auto;
+                        background-color: white;
+                        padding: 30px;
+                        border-radius: 15px;
+                        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                }
+
+                h1 {
+                        text-align: center;
+                        color: #2c5530;
+                        margin-bottom: 5px;
+                        font-size: 32px;
+                }
+
+                .subtitle {
+                        text-align: center;
+                        color: #666;
+                        margin-bottom: 20px;
+                        font-size: 16px;
+                }
+
+                .controls {
+                        text-align: center;
+                        margin-bottom: 20px;
+                        padding: 15px;
+                        background-color: #f8f9fa;
+                        border-radius: 8px;
+                }
+
+                button {
+                        background-color: #2c5530;
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        margin: 5px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: bold;
+                        transition: all 0.3s;
+                }
+
+                button:hover {
+                        background-color: #1a3d1f;
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                }
+
+                .map-wrapper {
+                        position: relative;
+                        display: inline-block;
+                        border: 4px solid #2c5530;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        max-width: 100%;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                }
+
+                #canvas {
+                        display: block;
+                        max-width: 100%;
+                        height: auto;
+                        cursor: crosshair;
+                }
+
+                #tooltip {
+                        position: fixed;
+                        background-color: rgba(255, 255, 255, 0.98);
+                        border: 3px solid #2c5530;
+                        border-radius: 10px;
+                        padding: 15px;
+                        pointer-events: none;
+                        display: none;
+                        z-index: 1000;
+                        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+                        min-width: 250px;
+                        max-width: 350px;
+                }
+
+                #tooltip h3 {
+                        margin: 0 0 10px 0;
+                        color: #2c5530;
+                        font-size: 18px;
+                        border-bottom: 2px solid #2c5530;
+                        padding-bottom: 5px;
+                }
+
+                #tooltip p {
+                        margin: 6px 0;
+                        font-size: 14px;
+                        color: #333;
+                }
+
+                #tooltip .label {
+                        font-weight: bold;
+                        color: #555;
+                }
+
+                .activity-high {
+                        color: #d32f2f;
+                        font-weight: bold;
+                        font-size: 16px;
+                }
+
+                .activity-medium {
+                        color: #f57c00;
+                        font-weight: bold;
+                        font-size: 16px;
+                }
+
+                .activity-low {
+                        color: #1976d2;
+                        font-weight: bold;
+                        font-size: 16px;
+                }
+
+                .legend {
+                        margin-top: 20px;
+                        padding: 20px;
+                        background: linear-gradient(135deg, #fff8e1 0%, #ffe0b2 100%);
+                        border: 3px solid #ffc107;
+                        border-radius: 8px;
+                }
+
+                .legend h3 {
+                        margin-top: 0;
+                        margin-bottom: 15px;
+                        color: #2c5530;
+                }
+
+                .legend-items {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 15px;
+                }
+
+                .legend-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                }
+
+                .legend-color {
+                        width: 30px;
+                        height: 30px;
+                        border: 2px solid #333;
+                        border-radius: 50%;
+                }
+
+                .stats {
+                        margin-top: 20px;
+                        padding: 15px;
+                        background-color: #e3f2fd;
+                        border: 2px solid #2196f3;
+                        border-radius: 8px;
+                        text-align: center;
+                }
+
+                .stats h3 {
+                        color: #1565c0;
+                        margin-bottom: 10px;
+                }
+        </style>
+</head>
+
+<body>
+        <div class="container">
+                <h1>Dartmouth Campus Interactive Heatmap</h1>
+                <p class="subtitle">Hover over buildings to see access point details | Red = High Activity, Yellow = Low
+                        Activity</p>
+
+                <div class="controls">
+                        <button onclick="toggleMarkers()">Toggle Markers</button>
+                        <button onclick="toggleHeatmap()">Toggle Heatmap Mode</button>
+                        <button onclick="showOnlyHigh()">Show High Activity Only</button>
+                        <button onclick="resetFilters()">Reset Filters</button>
+                </div>
+
+                <div style="text-align: center;">
+                        <div class="map-wrapper" id="mapWrapper">
+                                <canvas id="canvas" width="5100" height="3300"></canvas>
+                        </div>
+                        <div id="tooltip"></div>
+                </div>
+
+                <div class="stats">
+                        <h3>Campus Statistics</h3>
+                        <p><strong>Total Buildings:</strong> 129 |
+                                <strong>Total Access Points:</strong> 506 |
+                                <strong>Average APs per Building:</strong> 3.9
+                        </p>
+                </div>
+
+                <div class="legend">
+                        <h3>Legend - Access Point Activity Levels</h3>
+                        <div class="legend-items">
+                                <div class="legend-item">
+                                        <div class="legend-color"
+                                                style="background: linear-gradient(to right, #ffff00, #ffcc00, #ff9900, #ff6600, #ff3300, #ff0000);">
+                                        </div>
+                                        <span><strong>Yellow</strong> (Low Activity) → <strong>Red</strong> (High
+                                                Activity)</span>
+                                </div>
+                        </div>
+                        <div class="legend-items" style="margin-top: 15px;">
+                                <div class="legend-item">
+                                        <div class="legend-color" style="background: #ffff00;"></div>
+                                        <span><strong>1-5 APs</strong></span>
+                                </div>
+                                <div class="legend-item">
+                                        <div class="legend-color" style="background: #ffcc00;"></div>
+                                        <span><strong>6-10 APs</strong></span>
+                                </div>
+                                <div class="legend-item">
+                                        <div class="legend-color" style="background: #ff9900;"></div>
+                                        <span><strong>11-15 APs</strong></span>
+                                </div>
+                                <div class="legend-item">
+                                        <div class="legend-color" style="background: #ff6600;"></div>
+                                        <span><strong>16-20 APs</strong></span>
+                                </div>
+                                <div class="legend-item">
+                                        <div class="legend-color" style="background: #ff0000;"></div>
+                                        <span><strong>20+ APs</strong></span>
+                                </div>
+                        </div>
+                </div>
+        </div>
+
+        <script>
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                const tooltip = document.getElementById('tooltip');
+
+                const buildings = [
+                        {
+                                "code": "AcadBldg1",
+                                "name": "Acad Building #1",
+                                "type": "Acad",
+                                "x": 2426.981797555927,
+                                "y": 1565.508388094691,
+                                "activity": 4,
+                                "coord_x": 819402.729175,
+                                "coord_y": 439970.97775
+                        },
+                        {
+                                "code": "AcadBldg10",
+                                "name": "Dartmouth Hall",
+                                "type": "Acad",
+                                "x": 1823.2571498357577,
+                                "y": 1714.8130831583985,
+                                "activity": 22,
+                                "coord_x": 818146.0773545455,
+                                "coord_y": 439657.07585454546
+                        },
+                        {
+                                "code": "AcadBldg11",
+                                "name": "Acad Building #11",
+                                "type": "Acad",
+                                "x": 2497.4890979314805,
+                                "y": 1278.2264617475448,
+                                "activity": 1,
+                                "coord_x": 819549.49,
+                                "coord_y": 440574.9664
+                        },
+                        {
+                                "code": "AcadBldg12",
+                                "name": "Acad Building #12",
+                                "type": "Acad",
+                                "x": 2617.1319059390808,
+                                "y": 1434.370071793208,
+                                "activity": 3,
+                                "coord_x": 819798.5263,
+                                "coord_y": 440246.68620000005
+                        },
+                        {
+                                "code": "AcadBldg13",
+                                "name": "Acad Building #13",
+                                "type": "Acad",
+                                "x": 2741.9812519794796,
+                                "y": 1333.638526584953,
+                                "activity": 1,
+                                "coord_x": 820058.4,
+                                "coord_y": 440458.4667
+                        },
+                        {
+                                "code": "AcadBldg14",
+                                "name": "Acad Building #14",
+                                "type": "Acad",
+                                "x": 3153.463166268368,
+                                "y": 898.8803393861454,
+                                "activity": 1,
+                                "coord_x": 820914.8989,
+                                "coord_y": 441372.5131
+                        },
+                        {
+                                "code": "AcadBldg15",
+                                "name": "Acad Building #15",
+                                "type": "Acad",
+                                "x": 2531.9895538892597,
+                                "y": 1560.5800073313294,
+                                "activity": 5,
+                                "coord_x": 819621.30264,
+                                "coord_y": 439981.3393
+                        },
+                        {
+                                "code": "AcadBldg16",
+                                "name": "Acad Building #16",
+                                "type": "Acad",
+                                "x": 2820.732617908623,
+                                "y": 1335.810907086037,
+                                "activity": 6,
+                                "coord_x": 820222.3208333333,
+                                "coord_y": 440453.89943333337
+                        },
+                        {
+                                "code": "AcadBldg17",
+                                "name": "Acad Building #17",
+                                "type": "Acad",
+                                "x": 2695.907525959017,
+                                "y": 1254.628523488238,
+                                "activity": 11,
+                                "coord_x": 819962.4976181817,
+                                "coord_y": 440624.5792909091
+                        },
+                        {
+                                "code": "AcadBldg18",
+                                "name": "Acad Building #18",
+                                "type": "Acad",
+                                "x": 1799.411234315543,
+                                "y": 1629.7431729881791,
+                                "activity": 9,
+                                "coord_x": 818096.4421222223,
+                                "coord_y": 439835.92894444446
+                        },
+                        {
+                                "code": "AcadBldg19",
+                                "name": "Acad Building #19",
+                                "type": "Acad",
+                                "x": 2539.408210004156,
+                                "y": 1680.398484814359,
+                                "activity": 5,
+                                "coord_x": 819636.74456,
+                                "coord_y": 439729.42996
+                        },
+                        {
+                                "code": "AcadBldg21",
+                                "name": "Acad Building #21",
+                                "type": "Acad",
+                                "x": 2797.4990973144886,
+                                "y": 1925.373948567547,
+                                "activity": 3,
+                                "coord_x": 820173.9603,
+                                "coord_y": 439214.3874666667
+                        },
+                        {
+                                "code": "AcadBldg22",
+                                "name": "Acad Building #22",
+                                "type": "Acad",
+                                "x": 2758.2079768343247,
+                                "y": 2111.9439340539684,
+                                "activity": 2,
+                                "coord_x": 820092.1758999999,
+                                "coord_y": 438822.1381
+                        },
+                        {
+                                "code": "AcadBldg23",
+                                "name": "Acad Building #23",
+                                "type": "Acad",
+                                "x": 2935.579572532617,
+                                "y": 1427.0175572098815,
+                                "activity": 11,
+                                "coord_x": 820461.3745727274,
+                                "coord_y": 440262.14430909086
+                        },
+                        {
+                                "code": "AcadBldg25",
+                                "name": "Reed Hall",
+                                "type": "Acad",
+                                "x": 2756.002129876055,
+                                "y": 1975.99944508521,
+                                "activity": 3,
+                                "coord_x": 820087.5844333334,
+                                "coord_y": 439107.95116666664
+                        },
+                        {
+                                "code": "AcadBldg26",
+                                "name": "Acad Building #26",
+                                "type": "Acad",
+                                "x": 3044.1071585284662,
+                                "y": 1043.8594326279126,
+                                "activity": 7,
+                                "coord_x": 820687.2745571429,
+                                "coord_y": 441067.7054571429
+                        },
+                        {
+                                "code": "AcadBldg27",
+                                "name": "Acad Building #27",
+                                "type": "Acad",
+                                "x": 3184.957258955459,
+                                "y": 1057.5695339252125,
+                                "activity": 1,
+                                "coord_x": 820980.4538,
+                                "coord_y": 441038.881
+                        },
+                        {
+                                "code": "AcadBldg29",
+                                "name": "Acad Building #29",
+                                "type": "Acad",
+                                "x": 2831.757496863662,
+                                "y": 1986.9649581131816,
+                                "activity": 1,
+                                "coord_x": 820245.2691,
+                                "coord_y": 439084.897
+                        },
+                        {
+                                "code": "AcadBldg30",
+                                "name": "Acad Building #30",
+                                "type": "Acad",
+                                "x": 2802.3554274479393,
+                                "y": 1861.4800901215056,
+                                "activity": 7,
+                                "coord_x": 820184.0687428572,
+                                "coord_y": 439348.7195
+                        },
+                        {
+                                "code": "AcadBldg31",
+                                "name": "Acad Building #31",
+                                "type": "Acad",
+                                "x": 1899.615549806156,
+                                "y": 1544.537182332162,
+                                "activity": 3,
+                                "coord_x": 818305.0172333332,
+                                "coord_y": 440015.0681333333
+                        },
+                        {
+                                "code": "AcadBldg32",
+                                "name": "Acad Building #32",
+                                "type": "Acad",
+                                "x": 3085.8148809759296,
+                                "y": 961.994824736932,
+                                "activity": 10,
+                                "coord_x": 820774.08911,
+                                "coord_y": 441239.81964
+                        },
+                        {
+                                "code": "AcadBldg33",
+                                "name": "Acad Building #33",
+                                "type": "Acad",
+                                "x": 2600.2909520577523,
+                                "y": 1465.417864621064,
+                                "activity": 6,
+                                "coord_x": 819763.4718833333,
+                                "coord_y": 440181.41055
+                        },
+                        {
+                                "code": "AcadBldg34",
+                                "name": "Acad Building #34",
+                                "type": "Acad",
+                                "x": 2843.5482440121705,
+                                "y": 1524.0398944291228,
+                                "activity": 5,
+                                "coord_x": 820269.81152,
+                                "coord_y": 440058.16214
+                        },
+                        {
+                                "code": "AcadBldg35",
+                                "name": "Acad Building #35",
+                                "type": "Acad",
+                                "x": 1851.5546006688385,
+                                "y": 1552.6633151838614,
+                                "activity": 2,
+                                "coord_x": 818204.97845,
+                                "coord_y": 439997.98355
+                        },
+                        {
+                                "code": "AcadBldg36",
+                                "name": "Acad Building #36",
+                                "type": "Acad",
+                                "x": 2836.1129652556847,
+                                "y": 1388.44809663028,
+                                "activity": 1,
+                                "coord_x": 820254.335,
+                                "coord_y": 440343.2337
+                        },
+                        {
+                                "code": "AcadBldg4",
+                                "name": "Acad Building #4",
+                                "type": "Acad",
+                                "x": 2416.08369827125,
+                                "y": 1504.5345500451513,
+                                "activity": 5,
+                                "coord_x": 819380.0448,
+                                "coord_y": 440099.17066
+                        },
+                        {
+                                "code": "AcadBldg5",
+                                "name": "Acad Building #5",
+                                "type": "Acad",
+                                "x": 2919.169915638049,
+                                "y": 2118.10291768366,
+                                "activity": 1,
+                                "coord_x": 820427.2179,
+                                "coord_y": 438809.1893
+                        },
+                        {
+                                "code": "AcadBldg6",
+                                "name": "Acad Building #6",
+                                "type": "Acad",
+                                "x": 1776.3179545819876,
+                                "y": 1569.3806232807983,
+                                "activity": 6,
+                                "coord_x": 818048.3735000001,
+                                "coord_y": 439962.8366666666
+                        },
+                        {
+                                "code": "AcadBldg7",
+                                "name": "Acad Building #7",
+                                "type": "Acad",
+                                "x": 1814.9470519375172,
+                                "y": 1542.2164968842117,
+                                "activity": 1,
+                                "coord_x": 818128.7799,
+                                "coord_y": 440019.9472
+                        },
+                        {
+                                "code": "AcadBldg8",
+                                "name": "Acad Building #8",
+                                "type": "Acad",
+                                "x": 2898.7256999246893,
+                                "y": 1484.7132086295169,
+                                "activity": 5,
+                                "coord_x": 820384.6632999999,
+                                "coord_y": 440140.84354
+                        },
+                        {
+                                "code": "AcadBldg9",
+                                "name": "Acad Building #9",
+                                "type": "Acad",
+                                "x": 3206.4436360559193,
+                                "y": 954.9734409784724,
+                                "activity": 7,
+                                "coord_x": 821025.1776571429,
+                                "coord_y": 441254.5815714286
+                        },
+                        {
+                                "code": "AdmBldg1",
+                                "name": "Adm Building #1",
+                                "type": "Adm",
+                                "x": 2832.0873794314684,
+                                "y": 2231.6603912417777,
+                                "activity": 2,
+                                "coord_x": 820245.95575,
+                                "coord_y": 438570.44325
+                        },
+                        {
+                                "code": "AdmBldg12",
+                                "name": "Adm Building #12",
+                                "type": "Adm",
+                                "x": 2440.554417417035,
+                                "y": 1811.342135414743,
+                                "activity": 5,
+                                "coord_x": 819430.98056,
+                                "coord_y": 439454.13077999995
+                        },
+                        {
+                                "code": "AdmBldg14",
+                                "name": "Adm Building #14",
+                                "type": "Adm",
+                                "x": 2755.4978136632126,
+                                "y": 1284.442236944451,
+                                "activity": 2,
+                                "coord_x": 820086.5347,
+                                "coord_y": 440561.8982
+                        },
+                        {
+                                "code": "AdmBldg16",
+                                "name": "Adm Building #16",
+                                "type": "Adm",
+                                "x": 2583.55940654577,
+                                "y": 1554.5692810843466,
+                                "activity": 1,
+                                "coord_x": 819728.6452,
+                                "coord_y": 439993.9764
+                        },
+                        {
+                                "code": "AdmBldg18",
+                                "name": "Adm Building #18",
+                                "type": "Adm",
+                                "x": 2799.012766587548,
+                                "y": 2370.1260088154813,
+                                "activity": 1,
+                                "coord_x": 820177.111,
+                                "coord_y": 438279.3297
+                        },
+                        {
+                                "code": "AdmBldg19",
+                                "name": "Adm Building #19",
+                                "type": "Adm",
+                                "x": 2423.486779067025,
+                                "y": 1692.064455709624,
+                                "activity": 3,
+                                "coord_x": 819395.4543,
+                                "coord_y": 439704.90313333337
+                        },
+                        {
+                                "code": "AdmBldg20",
+                                "name": "Adm Building #20",
+                                "type": "Adm",
+                                "x": 2919.639961664856,
+                                "y": 2153.4205183774466,
+                                "activity": 1,
+                                "coord_x": 820428.1963,
+                                "coord_y": 438734.9367
+                        },
+                        {
+                                "code": "AdmBldg22",
+                                "name": "Adm Building #22",
+                                "type": "Adm",
+                                "x": 2800.1059454834904,
+                                "y": 1803.967189156829,
+                                "activity": 2,
+                                "coord_x": 820179.38645,
+                                "coord_y": 439469.63605
+                        },
+                        {
+                                "code": "AdmBldg23",
+                                "name": "Adm Building #23",
+                                "type": "Adm",
+                                "x": 3319.7901827499736,
+                                "y": 918.8761555311212,
+                                "activity": 1,
+                                "coord_x": 821261.1083,
+                                "coord_y": 441330.4734
+                        },
+                        {
+                                "code": "AdmBldg24",
+                                "name": "Adm Building #24",
+                                "type": "Adm",
+                                "x": 2289.267091424379,
+                                "y": 1886.3349385331967,
+                                "activity": 2,
+                                "coord_x": 819116.07625,
+                                "coord_y": 439296.46405
+                        },
+                        {
+                                "code": "AdmBldg25",
+                                "name": "Adm Building #25",
+                                "type": "Adm",
+                                "x": 2346.365456916159,
+                                "y": 2216.538780319912,
+                                "activity": 1,
+                                "coord_x": 819234.9264,
+                                "coord_y": 438602.2353
+                        },
+                        {
+                                "code": "AdmBldg26",
+                                "name": "Adm Building #26",
+                                "type": "Adm",
+                                "x": 2887.94169874012,
+                                "y": 955.6617088395868,
+                                "activity": 5,
+                                "coord_x": 820362.2164200001,
+                                "coord_y": 441253.13454
+                        },
+                        {
+                                "code": "AdmBldg27",
+                                "name": "Adm Building #27",
+                                "type": "Adm",
+                                "x": 2638.1172382797813,
+                                "y": 2406.2210927232227,
+                                "activity": 3,
+                                "coord_x": 819842.2072333334,
+                                "coord_y": 438203.44250000006
+                        },
+                        {
+                                "code": "AdmBldg28",
+                                "name": "Adm Building #28",
+                                "type": "Adm",
+                                "x": 2920.556464941066,
+                                "y": 977.1633707498258,
+                                "activity": 8,
+                                "coord_x": 820430.104,
+                                "coord_y": 441207.9289125
+                        },
+                        {
+                                "code": "AdmBldg29",
+                                "name": "Adm Building #29",
+                                "type": "Adm",
+                                "x": 2860.863237838261,
+                                "y": 933.5211501220474,
+                                "activity": 2,
+                                "coord_x": 820305.85265,
+                                "coord_y": 441299.6834
+                        },
+                        {
+                                "code": "AdmBldg4",
+                                "name": "Adm Building #4",
+                                "type": "Adm",
+                                "x": 2736.4991752461065,
+                                "y": 1431.478268022067,
+                                "activity": 3,
+                                "coord_x": 820046.9890666666,
+                                "coord_y": 440252.766
+                        },
+                        {
+                                "code": "AdmBldg5",
+                                "name": "Adm Building #5",
+                                "type": "Adm",
+                                "x": 2438.0434729219996,
+                                "y": 1896.2205477027455,
+                                "activity": 3,
+                                "coord_x": 819425.7540333333,
+                                "coord_y": 439275.68029999995
+                        },
+                        {
+                                "code": "AdmBldg6",
+                                "name": "Adm Building #6",
+                                "type": "Adm",
+                                "x": 2828.20702553069,
+                                "y": 988.2075100537332,
+                                "activity": 5,
+                                "coord_x": 820237.8788,
+                                "coord_y": 441184.70944
+                        },
+                        {
+                                "code": "AdmBldg7",
+                                "name": "Adm Building #7",
+                                "type": "Adm",
+                                "x": 2433.2140870931325,
+                                "y": 2466.4626643957454,
+                                "activity": 4,
+                                "coord_x": 819415.701675,
+                                "coord_y": 438076.789125
+                        },
+                        {
+                                "code": "AdmBldg8",
+                                "name": "Adm Building #8",
+                                "type": "Adm",
+                                "x": 2756.4254307287047,
+                                "y": 1065.6053662824852,
+                                "activity": 3,
+                                "coord_x": 820088.4655333334,
+                                "coord_y": 441021.98626666673
+                        },
+                        {
+                                "code": "AthlBldg10",
+                                "name": "Athl Building #10",
+                                "type": "Athl",
+                                "x": 3667.44367556629,
+                                "y": 2327.399843539082,
+                                "activity": 2,
+                                "coord_x": 821984.7484500001,
+                                "coord_y": 438369.15825
+                        },
+                        {
+                                "code": "AthlBldg11",
+                                "name": "Athl Building #11",
+                                "type": "Athl",
+                                "x": 3361.223101773183,
+                                "y": 2418.19521891122,
+                                "activity": 2,
+                                "coord_x": 821347.35085,
+                                "coord_y": 438178.2678
+                        },
+                        {
+                                "code": "AthlBldg2",
+                                "name": "Athl Building #2",
+                                "type": "Athl",
+                                "x": 3203.831764033239,
+                                "y": 2045.6706127904472,
+                                "activity": 4,
+                                "coord_x": 821019.7410500001,
+                                "coord_y": 438961.472775
+                        },
+                        {
+                                "code": "AthlBldg3",
+                                "name": "Thompson Arena",
+                                "type": "Athl",
+                                "x": 3924.0005284654326,
+                                "y": 2508.002069039503,
+                                "activity": 2,
+                                "coord_x": 822518.7711,
+                                "coord_y": 437989.45565
+                        },
+                        {
+                                "code": "AthlBldg4",
+                                "name": "Athl Building #4",
+                                "type": "Athl",
+                                "x": 3337.753108889039,
+                                "y": 1982.2167264794696,
+                                "activity": 2,
+                                "coord_x": 821298.4981,
+                                "coord_y": 439094.8798
+                        },
+                        {
+                                "code": "AthlBldg5",
+                                "name": "Athl Building #5",
+                                "type": "Athl",
+                                "x": 3845.6003999139066,
+                                "y": 2326.7510926338437,
+                                "activity": 3,
+                                "coord_x": 822355.5813666667,
+                                "coord_y": 438370.5222
+                        },
+                        {
+                                "code": "AthlBldg6",
+                                "name": "Athl Building #6",
+                                "type": "Athl",
+                                "x": 3116.720018098131,
+                                "y": 2105.995469248737,
+                                "activity": 1,
+                                "coord_x": 820838.4181,
+                                "coord_y": 438834.6443
+                        },
+                        {
+                                "code": "AthlBldg8",
+                                "name": "Athl Building #8",
+                                "type": "Athl",
+                                "x": 3098.333478831337,
+                                "y": 2298.2763050184003,
+                                "activity": 2,
+                                "coord_x": 820800.14655,
+                                "coord_y": 438430.3883
+                        },
+                        {
+                                "code": "AthlBldg9",
+                                "name": "Athl Building #9",
+                                "type": "Athl",
+                                "x": 1485.7391423953231,
+                                "y": 1511.3383890781552,
+                                "activity": 1,
+                                "coord_x": 817443.5342,
+                                "coord_y": 440084.8661
+                        },
+                        {
+                                "code": "LibBldg1",
+                                "name": "Baker-Berry Library (Baker Tower)",
+                                "type": "Lib",
+                                "x": 2605.402257636306,
+                                "y": 1614.8865187887277,
+                                "activity": 14,
+                                "coord_x": 819774.1110571428,
+                                "coord_y": 439867.1639428572
+                        },
+                        {
+                                "code": "LibBldg2",
+                                "name": "Baker-Berry Library (Berry Wing)",
+                                "type": "Lib",
+                                "x": 2583.148903251218,
+                                "y": 1513.3499552670692,
+                                "activity": 21,
+                                "coord_x": 819727.7907380953,
+                                "coord_y": 440080.63693333336
+                        },
+                        {
+                                "code": "LibBldg3",
+                                "name": "Lib Building #3",
+                                "type": "Lib",
+                                "x": 3080.5069345347,
+                                "y": 1107.599928474985,
+                                "activity": 7,
+                                "coord_x": 820763.0406285714,
+                                "coord_y": 440933.6958571429
+                        },
+                        {
+                                "code": "LibBldg4",
+                                "name": "Lib Building #4",
+                                "type": "Lib",
+                                "x": 2668.349887059361,
+                                "y": 1732.0425005140714,
+                                "activity": 5,
+                                "coord_x": 819905.1364399999,
+                                "coord_y": 439620.8523
+                        },
+                        {
+                                "code": "LibBldg5",
+                                "name": "Lib Building #5",
+                                "type": "Lib",
+                                "x": 2640.959693976969,
+                                "y": 1194.1583899722027,
+                                "activity": 1,
+                                "coord_x": 819848.1238,
+                                "coord_y": 440751.7132
+                        },
+                        {
+                                "code": "ResBldg100",
+                                "name": "Res Building #100",
+                                "type": "Res",
+                                "x": 2380.967695326195,
+                                "y": 1242.0841942261611,
+                                "activity": 2,
+                                "coord_x": 819306.9509,
+                                "coord_y": 440650.9528
+                        },
+                        {
+                                "code": "ResBldg101",
+                                "name": "Res Building #101",
+                                "type": "Res",
+                                "x": 2359.3657318432233,
+                                "y": 1782.423327164346,
+                                "activity": 2,
+                                "coord_x": 819261.98645,
+                                "coord_y": 439514.9303999999
+                        },
+                        {
+                                "code": "ResBldg13",
+                                "name": "Res Building #13",
+                                "type": "Res",
+                                "x": 2346.482632126659,
+                                "y": 1272.4345542651429,
+                                "activity": 2,
+                                "coord_x": 819235.1703,
+                                "coord_y": 440587.14345
+                        },
+                        {
+                                "code": "ResBldg15",
+                                "name": "Res Building #15",
+                                "type": "Res",
+                                "x": 2363.820551746292,
+                                "y": 1921.6225738272187,
+                                "activity": 2,
+                                "coord_x": 819271.25915,
+                                "coord_y": 439222.27445
+                        },
+                        {
+                                "code": "ResBldg17",
+                                "name": "Res Building #17",
+                                "type": "Res",
+                                "x": 2313.9288700594916,
+                                "y": 1134.553690064291,
+                                "activity": 1,
+                                "coord_x": 819167.4097,
+                                "coord_y": 440877.0276
+                        },
+                        {
+                                "code": "ResBldg19",
+                                "name": "Res Building #19",
+                                "type": "Res",
+                                "x": 3302.3301155401277,
+                                "y": 1820.38097470699,
+                                "activity": 2,
+                                "coord_x": 821224.7652,
+                                "coord_y": 439435.1273
+                        },
+                        {
+                                "code": "ResBldg20",
+                                "name": "Res Building #20",
+                                "type": "Res",
+                                "x": 2363.681685429765,
+                                "y": 1852.295635633753,
+                                "activity": 4,
+                                "coord_x": 819270.9701,
+                                "coord_y": 439368.029125
+                        },
+                        {
+                                "code": "ResBldg21",
+                                "name": "Res Building #21",
+                                "type": "Res",
+                                "x": 2881.7165739137563,
+                                "y": 1924.012219331431,
+                                "activity": 3,
+                                "coord_x": 820349.2588333334,
+                                "coord_y": 439217.2504
+                        },
+                        {
+                                "code": "ResBldg22",
+                                "name": "Res Building #22",
+                                "type": "Res",
+                                "x": 2248.8575698320637,
+                                "y": 1193.3091087090434,
+                                "activity": 2,
+                                "coord_x": 819031.9639,
+                                "coord_y": 440753.49875
+                        },
+                        {
+                                "code": "ResBldg23",
+                                "name": "Res Building #23",
+                                "type": "Res",
+                                "x": 3208.4697292546625,
+                                "y": 1752.2523155921954,
+                                "activity": 6,
+                                "coord_x": 821029.3949666667,
+                                "coord_y": 439578.3626833333
+                        },
+                        {
+                                "code": "ResBldg24",
+                                "name": "Res Building #24",
+                                "type": "Res",
+                                "x": 1947.1732716899712,
+                                "y": 1554.9057734982052,
+                                "activity": 2,
+                                "coord_x": 818404.0085499999,
+                                "coord_y": 439993.26895
+                        },
+                        {
+                                "code": "ResBldg25",
+                                "name": "Res Building #25",
+                                "type": "Res",
+                                "x": 2997.1715171582764,
+                                "y": 1776.1582279680588,
+                                "activity": 2,
+                                "coord_x": 820589.5781,
+                                "coord_y": 439528.1023
+                        },
+                        {
+                                "code": "ResBldg3",
+                                "name": "Res Building #3",
+                                "type": "Res",
+                                "x": 2885.7704262356856,
+                                "y": 1864.474851201172,
+                                "activity": 5,
+                                "coord_x": 820357.69692,
+                                "coord_y": 439342.42324
+                        },
+                        {
+                                "code": "ResBldg30",
+                                "name": "Res Building #30",
+                                "type": "Res",
+                                "x": 3251.337580197316,
+                                "y": 1814.7675872828695,
+                                "activity": 4,
+                                "coord_x": 821118.624325,
+                                "coord_y": 439446.929025
+                        },
+                        {
+                                "code": "ResBldg31",
+                                "name": "Res Building #31",
+                                "type": "Res",
+                                "x": 2023.6649912731373,
+                                "y": 1568.7646995503164,
+                                "activity": 3,
+                                "coord_x": 818563.2259333333,
+                                "coord_y": 439964.1316
+                        },
+                        {
+                                "code": "ResBldg33",
+                                "name": "Res Building #33",
+                                "type": "Res",
+                                "x": 2965.6356276556035,
+                                "y": 1788.5806936137378,
+                                "activity": 2,
+                                "coord_x": 820523.9362,
+                                "coord_y": 439501.985
+                        },
+                        {
+                                "code": "ResBldg36",
+                                "name": "Res Building #36",
+                                "type": "Res",
+                                "x": 2263.7732919270056,
+                                "y": 1241.6713376069674,
+                                "activity": 2,
+                                "coord_x": 819063.01095,
+                                "coord_y": 440651.8208
+                        },
+                        {
+                                "code": "ResBldg38",
+                                "name": "Res Building #38",
+                                "type": "Res",
+                                "x": 2423.5090867161052,
+                                "y": 1297.6913988204324,
+                                "activity": 3,
+                                "coord_x": 819395.5007333333,
+                                "coord_y": 440534.04283333337
+                        },
+                        {
+                                "code": "ResBldg39",
+                                "name": "Res Building #39",
+                                "type": "Res",
+                                "x": 2337.272775883437,
+                                "y": 1236.702836502809,
+                                "activity": 1,
+                                "coord_x": 819216.0,
+                                "coord_y": 440662.2667
+                        },
+                        {
+                                "code": "ResBldg41",
+                                "name": "Res Building #41",
+                                "type": "Res",
+                                "x": 2838.6589317988255,
+                                "y": 2084.6984412913735,
+                                "activity": 4,
+                                "coord_x": 820259.634425,
+                                "coord_y": 438879.4197
+                        },
+                        {
+                                "code": "ResBldg43",
+                                "name": "Res Building #43",
+                                "type": "Res",
+                                "x": 1640.8516048519523,
+                                "y": 1657.132318661781,
+                                "activity": 4,
+                                "coord_x": 817766.400525,
+                                "coord_y": 439778.345325
+                        },
+                        {
+                                "code": "ResBldg44",
+                                "name": "Res Building #44",
+                                "type": "Res",
+                                "x": 2352.8044605316827,
+                                "y": 1691.3582156299965,
+                                "activity": 4,
+                                "coord_x": 819248.329175,
+                                "coord_y": 439706.38795
+                        },
+                        {
+                                "code": "ResBldg47",
+                                "name": "Res Building #47",
+                                "type": "Res",
+                                "x": 2284.954500799998,
+                                "y": 1216.454074332374,
+                                "activity": 1,
+                                "coord_x": 819107.0996,
+                                "coord_y": 440704.8382
+                        },
+                        {
+                                "code": "ResBldg49",
+                                "name": "Res Building #49",
+                                "type": "Res",
+                                "x": 2456.35411333543,
+                                "y": 1265.3314465037838,
+                                "activity": 1,
+                                "coord_x": 819463.8676,
+                                "coord_y": 440602.0772
+                        },
+                        {
+                                "code": "ResBldg52",
+                                "name": "Res Building #52",
+                                "type": "Res",
+                                "x": 3181.836141807027,
+                                "y": 1856.300023782067,
+                                "activity": 1,
+                                "coord_x": 820973.9572,
+                                "coord_y": 439359.6102
+                        },
+                        {
+                                "code": "ResBldg53",
+                                "name": "Res Building #53",
+                                "type": "Res",
+                                "x": 3469.0340239964426,
+                                "y": 1930.4092138508277,
+                                "activity": 1,
+                                "coord_x": 821571.7591,
+                                "coord_y": 439203.8012
+                        },
+                        {
+                                "code": "ResBldg54",
+                                "name": "Res Building #54",
+                                "type": "Res",
+                                "x": 1656.469501437619,
+                                "y": 1875.7358912462369,
+                                "activity": 6,
+                                "coord_x": 817798.9091500001,
+                                "coord_y": 439318.74775
+                        },
+                        {
+                                "code": "ResBldg55",
+                                "name": "Res Building #55",
+                                "type": "Res",
+                                "x": 1606.642580793763,
+                                "y": 1742.5494993249886,
+                                "activity": 4,
+                                "coord_x": 817695.1945,
+                                "coord_y": 439598.762125
+                        },
+                        {
+                                "code": "ResBldg56",
+                                "name": "Res Building #56",
+                                "type": "Res",
+                                "x": 2569.9923804117716,
+                                "y": 2149.380147967342,
+                                "activity": 12,
+                                "coord_x": 819700.4054583333,
+                                "coord_y": 438743.431275
+                        },
+                        {
+                                "code": "ResBldg57",
+                                "name": "Res Building #57",
+                                "type": "Res",
+                                "x": 2941.2060535512865,
+                                "y": 2058.52606657191,
+                                "activity": 6,
+                                "coord_x": 820473.0860833334,
+                                "coord_y": 438934.44515
+                        },
+                        {
+                                "code": "ResBldg6",
+                                "name": "Res Building #6",
+                                "type": "Res",
+                                "x": 3148.2663808258367,
+                                "y": 1872.978670171404,
+                                "activity": 2,
+                                "coord_x": 820904.0818,
+                                "coord_y": 439324.5446
+                        },
+                        {
+                                "code": "ResBldg60",
+                                "name": "Res Building #60",
+                                "type": "Res",
+                                "x": 1735.2949806473916,
+                                "y": 1851.558696874068,
+                                "activity": 6,
+                                "coord_x": 817962.9842500001,
+                                "coord_y": 439369.57848333335
+                        },
+                        {
+                                "code": "ResBldg61",
+                                "name": "Res Building #61",
+                                "type": "Res",
+                                "x": 3104.7238996540545,
+                                "y": 1896.3179590340587,
+                                "activity": 1,
+                                "coord_x": 820813.4482,
+                                "coord_y": 439275.4755
+                        },
+                        {
+                                "code": "ResBldg62",
+                                "name": "Res Building #62",
+                                "type": "Res",
+                                "x": 2777.9653555665864,
+                                "y": 1635.3983547461394,
+                                "activity": 4,
+                                "coord_x": 820133.30085,
+                                "coord_y": 439824.03935
+                        },
+                        {
+                                "code": "ResBldg63",
+                                "name": "Res Building #63",
+                                "type": "Res",
+                                "x": 2166.5082347327843,
+                                "y": 1700.183049647312,
+                                "activity": 2,
+                                "coord_x": 818860.5538999999,
+                                "coord_y": 439687.8344
+                        },
+                        {
+                                "code": "ResBldg66",
+                                "name": "Res Building #66",
+                                "type": "Res",
+                                "x": 3035.896747189632,
+                                "y": 1765.2381941725034,
+                                "activity": 2,
+                                "coord_x": 820670.1846,
+                                "coord_y": 439551.06085
+                        },
+                        {
+                                "code": "ResBldg67",
+                                "name": "Res Building #67",
+                                "type": "Res",
+                                "x": 2550.749626972771,
+                                "y": 1212.369172008708,
+                                "activity": 1,
+                                "coord_x": 819660.3517,
+                                "coord_y": 440713.4264
+                        },
+                        {
+                                "code": "ResBldg7",
+                                "name": "Res Building #7",
+                                "type": "Res",
+                                "x": 3345.2368527346407,
+                                "y": 1735.0051034877542,
+                                "activity": 2,
+                                "coord_x": 821314.0755,
+                                "coord_y": 439614.62365
+                        },
+                        {
+                                "code": "ResBldg72",
+                                "name": "Res Building #72",
+                                "type": "Res",
+                                "x": 2058.4187871783506,
+                                "y": 1443.169815733709,
+                                "activity": 1,
+                                "coord_x": 818635.5659,
+                                "coord_y": 440228.1854
+                        },
+                        {
+                                "code": "ResBldg74",
+                                "name": "Res Building #74",
+                                "type": "Res",
+                                "x": 1533.6144640279235,
+                                "y": 1794.6215992990765,
+                                "activity": 4,
+                                "coord_x": 817543.1866,
+                                "coord_y": 439489.28445
+                        },
+                        {
+                                "code": "ResBldg76",
+                                "name": "Res Building #76",
+                                "type": "Res",
+                                "x": 2023.20251991821,
+                                "y": 1276.333980276977,
+                                "activity": 2,
+                                "coord_x": 818562.2633,
+                                "coord_y": 440578.9452
+                        },
+                        {
+                                "code": "ResBldg79",
+                                "name": "Res Building #79",
+                                "type": "Res",
+                                "x": 2815.300216930802,
+                                "y": 1420.593217641639,
+                                "activity": 1,
+                                "coord_x": 820211.0133,
+                                "coord_y": 440275.651
+                        },
+                        {
+                                "code": "ResBldg80",
+                                "name": "Res Building #80",
+                                "type": "Res",
+                                "x": 3149.84672082396,
+                                "y": 1792.61899498431,
+                                "activity": 4,
+                                "coord_x": 820907.371275,
+                                "coord_y": 439493.494775
+                        },
+                        {
+                                "code": "ResBldg82",
+                                "name": "Res Building #82",
+                                "type": "Res",
+                                "x": 2863.2175155376317,
+                                "y": 1698.484344428667,
+                                "activity": 4,
+                                "coord_x": 820310.753075,
+                                "coord_y": 439691.4058
+                        },
+                        {
+                                "code": "ResBldg83",
+                                "name": "Res Building #83",
+                                "type": "Res",
+                                "x": 1713.9804423348396,
+                                "y": 1641.784136022674,
+                                "activity": 8,
+                                "coord_x": 817918.618075,
+                                "coord_y": 439810.613725
+                        },
+                        {
+                                "code": "ResBldg84",
+                                "name": "Res Building #84",
+                                "type": "Res",
+                                "x": 2898.5857366420096,
+                                "y": 1802.6863110086124,
+                                "activity": 3,
+                                "coord_x": 820384.3719666667,
+                                "coord_y": 439472.329
+                        },
+                        {
+                                "code": "ResBldg85",
+                                "name": "Res Building #85",
+                                "type": "Res",
+                                "x": 3511.5468141938327,
+                                "y": 1833.1484229631023,
+                                "activity": 1,
+                                "coord_x": 821660.2494,
+                                "coord_y": 439408.2847
+                        },
+                        {
+                                "code": "ResBldg86",
+                                "name": "Res Building #86",
+                                "type": "Res",
+                                "x": 3318.290734002716,
+                                "y": 1642.6415864245791,
+                                "activity": 2,
+                                "coord_x": 821257.9872000001,
+                                "coord_y": 439808.811
+                        },
+                        {
+                                "code": "ResBldg87",
+                                "name": "Res Building #87",
+                                "type": "Res",
+                                "x": 3353.55211299815,
+                                "y": 1801.1312970165163,
+                                "activity": 2,
+                                "coord_x": 821331.3837,
+                                "coord_y": 439475.5983
+                        },
+                        {
+                                "code": "ResBldg89",
+                                "name": "Res Building #89",
+                                "type": "Res",
+                                "x": 3021.370902907569,
+                                "y": 1133.7489478493226,
+                                "activity": 10,
+                                "coord_x": 820639.9490799999,
+                                "coord_y": 440878.71951
+                        },
+                        {
+                                "code": "ResBldg90",
+                                "name": "Res Building #90",
+                                "type": "Res",
+                                "x": 2231.7598137537716,
+                                "y": 1702.9286650752474,
+                                "activity": 2,
+                                "coord_x": 818996.37495,
+                                "coord_y": 439682.06195
+                        },
+                        {
+                                "code": "ResBldg91",
+                                "name": "Res Building #91",
+                                "type": "Res",
+                                "x": 2278.107029397157,
+                                "y": 1693.0587520675326,
+                                "activity": 4,
+                                "coord_x": 819092.8466,
+                                "coord_y": 439702.8127
+                        },
+                        {
+                                "code": "ResBldg92",
+                                "name": "Res Building #92",
+                                "type": "Res",
+                                "x": 2758.1819218846504,
+                                "y": 2279.0029879570066,
+                                "activity": 3,
+                                "coord_x": 820092.1216666667,
+                                "coord_y": 438470.909
+                        },
+                        {
+                                "code": "ResBldg93",
+                                "name": "Res Building #93",
+                                "type": "Res",
+                                "x": 2300.8232383318245,
+                                "y": 1537.4678371733462,
+                                "activity": 2,
+                                "coord_x": 819140.13035,
+                                "coord_y": 440029.9309
+                        },
+                        {
+                                "code": "ResBldg94",
+                                "name": "Res Building #94",
+                                "type": "Res",
+                                "x": 3273.669991074305,
+                                "y": 1729.0802423803543,
+                                "activity": 12,
+                                "coord_x": 821165.1092,
+                                "coord_y": 439627.080225
+                        },
+                        {
+                                "code": "ResBldg96",
+                                "name": "Res Building #96",
+                                "type": "Res",
+                                "x": 3551.362076349382,
+                                "y": 1748.634865577711,
+                                "activity": 1,
+                                "coord_x": 821743.1248,
+                                "coord_y": 439585.9681
+                        },
+                        {
+                                "code": "ResBldg97",
+                                "name": "Res Building #97",
+                                "type": "Res",
+                                "x": 2348.286893359502,
+                                "y": 1566.2787446170114,
+                                "activity": 6,
+                                "coord_x": 819238.9258666667,
+                                "coord_y": 439969.3581333333
+                        },
+                        {
+                                "code": "ResBldg98",
+                                "name": "Res Building #98",
+                                "type": "Res",
+                                "x": 3474.6264859595103,
+                                "y": 1853.2814616134565,
+                                "activity": 1,
+                                "coord_x": 821583.3998,
+                                "coord_y": 439365.9565
+                        },
+                        {
+                                "code": "SocBldg1",
+                                "name": "Soc Building #1",
+                                "type": "Soc",
+                                "x": 2437.5645038355724,
+                                "y": 2035.2544662178552,
+                                "activity": 5,
+                                "coord_x": 819424.75706,
+                                "coord_y": 438983.37194
+                        },
+                        {
+                                "code": "SocBldg10",
+                                "name": "Soc Building #10",
+                                "type": "Soc",
+                                "x": 1918.45138882607,
+                                "y": 1178.153441872535,
+                                "activity": 1,
+                                "coord_x": 818344.224,
+                                "coord_y": 440785.3624
+                        },
+                        {
+                                "code": "SocBldg11",
+                                "name": "Collis Center",
+                                "type": "Soc",
+                                "x": 2308.13773710269,
+                                "y": 1981.6364203524136,
+                                "activity": 6,
+                                "coord_x": 819155.3554666666,
+                                "coord_y": 439096.09985000006
+                        },
+                        {
+                                "code": "SocBldg2",
+                                "name": "Soc Building #2",
+                                "type": "Soc",
+                                "x": 2437.345017707383,
+                                "y": 1968.0956983075305,
+                                "activity": 3,
+                                "coord_x": 819424.3002,
+                                "coord_y": 439124.5682
+                        },
+                        {
+                                "code": "SocBldg4",
+                                "name": "Hopkins Center for the Arts",
+                                "type": "Soc",
+                                "x": 2683.331475399318,
+                                "y": 2222.8440100493026,
+                                "activity": 21,
+                                "coord_x": 819936.3205904762,
+                                "coord_y": 438588.9790285714
+                        },
+                        {
+                                "code": "SocBldg5",
+                                "name": "Soc Building #5",
+                                "type": "Soc",
+                                "x": 2772.6778061772347,
+                                "y": 2197.7364789135463,
+                                "activity": 4,
+                                "coord_x": 820122.294825,
+                                "coord_y": 438641.765725
+                        }
+                ];
+                const minActivity = 1;
+                const maxActivity = 22;
+
+                let showMarkers = true;
+                let heatmapMode = false;
+                let filterMode = 'all';  // 'all', 'high', 'medium', 'low'
+
+                const img = new Image();
+                img.src = '/new-dartmouth-campus-map.jpg';
+                img.onload = function () {
+                        drawMap();
+                };
+                img.onerror = function() {
+                        console.error('Failed to load campus map image');
+                };
+
+                function getColor(activity) {
+                        // Normalize activity to 0-1 range
+                        const normalized = (activity - minActivity) / (maxActivity - minActivity);
+
+                        // Gradient from Yellow (low activity) to Red (high activity)
+                        // Yellow: rgb(255, 255, 0)
+                        // Red: rgb(255, 0, 0)
+                        // We just decrease the green channel from 255 to 0
+
+                        const red = 255;
+                        const green = Math.round(255 * (1 - normalized));  // 255 for low, 0 for high
+                        const blue = 0;
+
+                        return `rgb(${red}, ${green}, ${blue})`;
+                }
+
+                function drawMap() {
+                        const scale = canvas.width / 5100;
+                        ctx.setTransform(scale, 0, 0, scale, 0, 0);
+                        ctx.clearRect(0, 0, 5100, 3300);
+
+                        // Draw campus map
+                        ctx.globalAlpha = heatmapMode ? 0.4 : 0.9;  // Dim map more in heatmap mode
+                        ctx.drawImage(img, 0, 0);
+                        ctx.globalAlpha = 1.0;
+
+                        if (!showMarkers) return;
+
+                        // Draw buildings
+                        buildings.forEach(building => {
+                                // Filter check
+                                if (filterMode === 'high' && building.activity < 16) return;
+                                if (filterMode === 'medium' && (building.activity < 6 || building.activity > 15)) return;
+                                if (filterMode === 'low' && building.activity > 5) return;
+
+                                const radius = Math.max(15, Math.min(50, building.activity * 3 + 10));
+
+                                // Outer glow for heatmap effect
+                                if (heatmapMode) {
+                                        const glowRadius = radius * 4;
+                                        const gradient = ctx.createRadialGradient(
+                                                building.x, building.y, 0,
+                                                building.x, building.y, glowRadius
+                                        );
+
+                                        // Convert rgb to rgba for transparency
+                                        const normalized = (building.activity - minActivity) / (maxActivity - minActivity);
+                                        const red = 255;
+                                        const green = Math.round(255 * (1 - normalized));
+
+                                        gradient.addColorStop(0, `rgba(${red}, ${green}, 0, 0.8)`);
+                                        gradient.addColorStop(0.4, `rgba(${red}, ${green}, 0, 0.4)`);
+                                        gradient.addColorStop(0.7, `rgba(${red}, ${green}, 0, 0.15)`);
+                                        gradient.addColorStop(1, `rgba(${red}, ${green}, 0, 0)`);
+
+                                        ctx.fillStyle = gradient;
+                                        ctx.fillRect(
+                                                building.x - glowRadius,
+                                                building.y - glowRadius,
+                                                glowRadius * 2,
+                                                glowRadius * 2
+                                        );
+                                }
+
+                                // Draw circle
+                                ctx.fillStyle = getColor(building.activity);
+                                ctx.globalAlpha = heatmapMode ? 0.8 : 0.7;
+                                ctx.beginPath();
+                                ctx.arc(building.x, building.y, radius, 0, 2 * Math.PI);
+                                ctx.fill();
+
+                                // White border
+                                ctx.globalAlpha = 1.0;
+                                ctx.strokeStyle = 'white';
+                                ctx.lineWidth = 3;
+                                ctx.stroke();
+
+                                // Inner border for definition
+                                ctx.strokeStyle = '#333';
+                                ctx.lineWidth = 1;
+                                ctx.stroke();
+                        });
+
+                        ctx.setTransform(1, 0, 0, 1, 0, 0);
+                }
+
+                function toggleMarkers() {
+                        showMarkers = !showMarkers;
+                        drawMap();
+                }
+
+                function toggleHeatmap() {
+                        heatmapMode = !heatmapMode;
+                        drawMap();
+                }
+
+                function showOnlyHigh() {
+                        filterMode = filterMode === 'high' ? 'all' : 'high';
+                        drawMap();
+                }
+
+                function resetFilters() {
+                        filterMode = 'all';
+                        heatmapMode = false;
+                        showMarkers = true;
+                        drawMap();
+                }
+
+                // Handle mouse movement for tooltips
+                canvas.addEventListener('mousemove', function (e) {
+                        const rect = canvas.getBoundingClientRect();
+                        const scaleX = 5100 / rect.width;
+                        const scaleY = 3300 / rect.height;
+
+                        const canvasX = (e.clientX - rect.left) * scaleX;
+                        const canvasY = (e.clientY - rect.top) * scaleY;
+
+                        let hoveredBuilding = null;
+                        let minDist = Infinity;
+
+                        for (const building of buildings) {
+                                const distance = Math.sqrt(
+                                        Math.pow(canvasX - building.x, 2) +
+                                        Math.pow(canvasY - building.y, 2)
+                                );
+                                const radius = Math.max(15, Math.min(50, building.activity * 3 + 10));
+
+                                if (distance <= radius && distance < minDist) {
+                                        hoveredBuilding = building;
+                                        minDist = distance;
+                                }
+                        }
+
+                        if (hoveredBuilding) {
+                                tooltip.style.display = 'block';
+                                tooltip.style.left = (e.clientX + 15) + 'px';
+                                tooltip.style.top = (e.clientY + 15) + 'px';
+
+                                const activityClass = hoveredBuilding.activity > 15 ? 'activity-high' :
+                                        hoveredBuilding.activity > 5 ? 'activity-medium' : 'activity-low';
+
+                                tooltip.innerHTML = `
+                    <h3>${hoveredBuilding.name}</h3>
+                    <p><span class="label">Code:</span> ${hoveredBuilding.code}</p>
+                    <p><span class="label">Type:</span> ${hoveredBuilding.type}</p>
+                    <p class="${activityClass}">
+                        <span class="label">Access Points:</span> ${hoveredBuilding.activity}
+                    </p>
+                    <p style="font-size: 12px; color: #666; margin-top: 8px; border-top: 1px solid #ddd; padding-top: 5px;">
+                        Data Coords: (${hoveredBuilding.coord_x.toFixed(0)}, ${hoveredBuilding.coord_y.toFixed(0)})<br>
+                        Map Position: (${hoveredBuilding.x.toFixed(0)}, ${hoveredBuilding.y.toFixed(0)})
+                    </p>
+                `;
+
+                                canvas.style.cursor = 'pointer';
+                        } else {
+                                tooltip.style.display = 'none';
+                                canvas.style.cursor = 'crosshair';
+                        }
+                });
+
+                canvas.addEventListener('mouseleave', function () {
+                        tooltip.style.display = 'none';
+                });
+
+                // Initial draw
+                window.onload = function () {
+                        setTimeout(drawMap, 100);
+                };
+        </script>
+</body>
+
+</html>

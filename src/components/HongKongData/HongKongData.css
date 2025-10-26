@@ -1,0 +1,221 @@
+.hongkong-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 50px;
+  margin: 100px auto;
+  max-width: 1400px;
+  padding: 0 60px;
+  position: relative;
+}
+
+.hongkong-title {
+  position: relative;
+  text-align: center;
+}
+
+.hongkong-title h1 {
+  padding: 0px 30px;
+  font-size: 72px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #06b6d4 0%, #6366f1 50%, #8b5cf6 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -1px;
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.hongkong-title h1::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  height: 4px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 2px;
+}
+
+.hongkong-subtitle {
+  font-size: 18px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 20px;
+  max-width: 700px;
+  line-height: 1.6;
+}
+
+.hongkong-visualization {
+  width: 100%;
+  max-width: 1300px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.hongkong-iframe {
+  width: 100%;
+  height: 750px;
+  border: none;
+  border-radius: 24px;
+  background: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+  transition: all 0.4s ease;
+  overflow: hidden;
+}
+
+.hongkong-iframe:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 60px rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.hongkong-instructions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+  padding: 20px 0;
+}
+
+.instruction-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 25px 30px;
+  background: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.instruction-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4);
+  background-size: 200% 100%;
+  animation: gradientMove 3s linear infinite;
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
+.instruction-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.instruction-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.instruction-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.instruction-content h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  background: linear-gradient(135deg, #06b6d4, #6366f1);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.instruction-content p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media(max-width: 1024px) {
+  .hongkong-iframe {
+    height: 650px;
+  }
+}
+
+@media(max-width: 768px) {
+  .hongkong-section {
+    gap: 40px;
+    margin: 60px 20px;
+    padding: 0 20px;
+  }
+  
+  .hongkong-title h1 {
+    font-size: 48px;
+    padding: 0;
+  }
+  
+  .hongkong-title h1::after {
+    width: 100px;
+    height: 3px;
+  }
+  
+  .hongkong-subtitle {
+    font-size: 16px;
+  }
+  
+  .hongkong-iframe {
+    height: 500px;
+    border-radius: 16px;
+  }
+  
+  .hongkong-instructions {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .instruction-card {
+    padding: 20px;
+  }
+  
+  .instruction-icon {
+    font-size: 28px;
+  }
+  
+  .instruction-content h3 {
+    font-size: 16px;
+  }
+  
+  .instruction-content p {
+    font-size: 13px;
+  }
+}
+
+@media(max-width: 480px) {
+  .hongkong-iframe {
+    height: 400px;
+    border-radius: 12px;
+  }
+  
+  .hongkong-title h1 {
+    font-size: 36px;
+  }
+}
+
