@@ -1,55 +1,19 @@
-import React, { useState } from "react";
-import { processData } from "./utils/dataProcessor.jsx";
-import Heatmap from "./components/Heatmap";
-import "../styles/style.css";
+import Desc from "./components/Desc/Desc"
+import Navbar from './components/Navbar/Navbar'
+import About  from './components/About/About'
+import Footer from './components/Footer/Footer'
+import Background from './components/Background/Background'
 
-export default function App() {
-  const [dataset, setDataset] = useState([]);
-  const [processedData, setProcessedData] = useState([]);
-
-  const handleUpload = async (event) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      setDataset(data);
-    }
-  };
-
-  const handleUpdate = () => {
-    if (dataset.length === 0) {
-      alert("Please upload a dataset first!");
-      return;
-    }
-    const processed = processData(dataset);
-    setProcessedData(processed);
-  };
-
+function App() {
   return (
-    <div className="app-container">
-      <header>
-        <h1>Network Weather Map</h1>
-        <p>Visualize Wi-Fi usage across your region</p>
-      </header>
-
-      <main>
-        <section id="map-container">
-          <Heatmap data={processedData} />
-        </section>
-
-        <section id="controls">
-          <input
-            type="file"
-            accept=".json,.csv"
-            onChange={handleUpload}
-          />
-          <button onClick={handleUpdate}>Update Map</button>
-        </section>
-      </main>
-
-      <footer>
-        <p>© 2025 Network Weather Map Project</p>
-      </footer>
+    <div>
+      <Background />
+      <Navbar />
+      <Desc />
+      <About />
+      <Footer />
     </div>
-  );
+  )
 }
+
+export default App
